@@ -74,12 +74,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const email = button.getAttribute("data-email");
 
     try {
+      // Prompt for teacher password (required for unregister)
+      const teacherPassword = prompt("Teacher password (required to unregister):");
+
       const response = await fetch(
         `/activities/${encodeURIComponent(
           activity
         )}/unregister?email=${encodeURIComponent(email)}`,
         {
           method: "DELETE",
+          headers: teacherPassword
+            ? { Authorization: `Bearer ${teacherPassword}` }
+            : {},
         }
       );
 

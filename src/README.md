@@ -48,3 +48,12 @@ The application uses a simple data model with meaningful identifiers:
    - Grade level
 
 All data is stored in memory, which means data will be reset when the server restarts.
+
+## Editing activities
+
+To make it easier for teachers to add or change activities without touching Python code, the application now loads activities from `src/activities.json`.
+
+- Edit `src/activities.json` to add/remove activities or change descriptions, schedules, and capacities.
+- The server will read this file on startup. When the file is missing the app will create it with default activities.
+
+Keep in mind the data is still stored in-memory during runtime; changes to `activities.json` will be picked up on server restart or reload.
