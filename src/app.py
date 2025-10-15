@@ -8,6 +8,7 @@ for extracurricular activities at Mergington High School.
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
+from fastapi import Header
 import os
 from pathlib import Path
 
@@ -106,6 +107,26 @@ else:
         # If writing fails, continue with in-memory data
         pass
 
+# Simple teacher auth (for exercise/demo purposes only)
+teachers_file = current_dir / "teachers.json"
+teachers = []
+if teachers_file.exists():
+    try:
+        with teachers_file.open("r", encoding="utf-8") as f:
+            data = json.load(f)
+            teachers = data.get("teachers", [])
+    except Exception:
+        teachers = []
+
+
+def _validate_teacher(password: str | None) -> bool:
+    if not password:
+        return False
+    for t in teachers:
+        if t.get("password") == password:
+            return True
+    return False
+
 
 @app.get("/")
 def root():
@@ -140,7 +161,7 @@ def signup_for_activity(activity_name: str, email: str):
 
 
 @app.delete("/activities/{activity_name}/unregister")
-def unregister_from_activity(activity_name: str, email: str):
+def unregister_from_activity(activity_name: str, email: str, authorization: str | None = Header(None)):
     """Unregister a student from an activity"""
     # Validate activity exists
     if activity_name not in activities:
@@ -155,6 +176,14 @@ def unregister_from_activity(activity_name: str, email: str):
             status_code=400,
             detail="Student is not signed up for this activity"
         )
+    # Require teacher authorization to unregister
+    # Expect header: Authorization: Bearer <password>
+    token = None
+    if authorization and authorization.lower().startswith("bearer "):
+        token = authorization.split(None, 1)[1]
+
+    if not _validate_teacher(token):
+        raise HTTPException(status_code=401, detail="Unauthorized: teacher password required")
 
     # Remove student
     activity["participants"].remove(email)
